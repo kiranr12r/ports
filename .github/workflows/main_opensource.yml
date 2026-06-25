@@ -1,6 +1,3 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
 name: Build and deploy Node.js app to Azure Web App - opensource
 
 on:
@@ -12,54 +9,58 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Set up Node.js version
-        uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '22.x'
+          node-version: 22
+          cache: npm
 
-      - name: npm install, build, and test
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
         run: |
-          npm install
-          npm run build --if-present
-          npm run test --if-present
+          NODE_ENV=production npm run build
 
-      - name: Upload artifact for deployment job
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: node-app
           path: .
+          include-hidden-files: true
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
+
     permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
+      id-token: write
+      contents: read
 
     steps:
-      - name: Download artifact from build job
+      - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: node-app
-      
-      - name: Login to Azure
+
+      - name: Azure Login
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_037646AD3B034AF2A82EB20AA22BF3DA }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_781C9A0375FB43CABE2F34D7A6B8F832 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_415BF7E1571146D4AD07206D6593EFDC }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_B9D8F56CC42F49B5921C813891707F4C }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_57C5439A02D142FBB46C5D2F0D0C93EF }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_DE49394836D04A90846098E1ABA526DA }}
 
-      - name: 'Deploy to Azure Web App'
-        id: deploy-to-webapp
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'opensource'
-          slot-name: 'Production'
+          app-name: opensource
+          slot-name: Production
           package: .
-          
